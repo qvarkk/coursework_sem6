@@ -1,0 +1,19 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+.header {
+  min-width: 100vw;
+  padding: 10px;
+  background-color: #2d742d;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+#canvas {
+  z-index: 100;
+  border: 1px solid black;
+}
