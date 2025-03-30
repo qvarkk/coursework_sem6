@@ -23,6 +23,7 @@ export default class Canvas {
   init(config: CanvasConfig, panzoomOptions: PanZoomOptions = {}): void {
     this.el.height = config.height;
     this.el.width = config.width;
-    panzoom(this.el, panzoomOptions);
+    const pz = panzoom(this.el, panzoomOptions);
+    pz.moveTo(-config.width / 2 + window.innerWidth / 2, 0);
   }
 }
