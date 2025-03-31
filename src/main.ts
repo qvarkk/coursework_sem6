@@ -11,15 +11,27 @@ canvas.init({
   maxZoom: 1,
   minZoom: 0.5,
   zoomSpeed: 0.05,
-  initialX: 0,
-  initialY: window.innerWidth * 5,
   bounds: true,
 });
 
 const tree = new BinarySearchTree();
 tree.insert(50);
+
+tree.insert(25);
+tree.insert(35);
+tree.insert(30);
 tree.insert(40);
+tree.insert(15);
+tree.insert(10);
+tree.insert(20);
+
+tree.insert(75);
+tree.insert(85);
+tree.insert(80);
+tree.insert(90);
+tree.insert(65);
 tree.insert(60);
+tree.insert(70);
 
 const renderer = new TreeRenderer(canvas);
 renderer.drawTree(tree);
