@@ -15,23 +15,19 @@ canvas.init({
 });
 
 const tree = new BinarySearchTree();
-tree.insert(50);
-
-tree.insert(25);
-tree.insert(35);
-tree.insert(30);
-tree.insert(40);
-tree.insert(15);
-tree.insert(10);
-tree.insert(20);
-
-tree.insert(75);
-tree.insert(85);
-tree.insert(80);
-tree.insert(90);
-tree.insert(65);
-tree.insert(60);
-tree.insert(70);
-
 const renderer = new TreeRenderer(canvas);
-renderer.drawTree(tree);
+
+const onAddNodeButtonClick = () => {
+  const addNodeInput = document.querySelector('#addNodeInput') as HTMLInputElement;
+  if (!addNodeInput.value) return;
+  
+  const nodeValue = parseInt(addNodeInput.value);
+  addNodeInput.value = '';
+  
+  canvas.reset();
+  tree.insert(nodeValue);
+  renderer.drawTree(tree);
+};
+
+const addNodeButton = document.querySelector('#addNodeButton') as HTMLButtonElement;
+addNodeButton.addEventListener('click', onAddNodeButtonClick);
