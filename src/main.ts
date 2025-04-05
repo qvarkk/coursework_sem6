@@ -15,7 +15,11 @@ canvas.init({
 });
 
 const tree = new BinarySearchTree();
+tree.insert(50);
+tree.insert(75);
+tree.insert(25);
 const renderer = new TreeRenderer(canvas);
+renderer.drawTree(tree);
 
 const onAddNodeButtonClick = () => {
   const addNodeInput = document.querySelector('#addNodeInput') as HTMLInputElement;

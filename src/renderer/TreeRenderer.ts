@@ -13,11 +13,13 @@ export default class TreeRenderer {
   private _radius: number;
   private _separation: number;
 
-  constructor(canvas: Canvas, radius: number = 50, separation: number = 10) {
+  private _nodeArray: TreeNodeCircle[] = [];
+
+  constructor(canvas: Canvas, radius: number = 50, separation: number = 30) {
     this._canvas = canvas;
     this._context = canvas.context;
 
-    this._baseOffsetY = radius * 1.5;
+    this._baseOffsetY = radius * 1.25;
     this._baseOffsetX = radius;
 
     this._radius = radius;
@@ -42,37 +44,55 @@ export default class TreeRenderer {
       this._radius
     );
     nodeCircle.draw();
+    this._nodeArray.push(nodeCircle);
 
     if (node.left) {
       const leftOffset = this.calculateHorizontalOffset(node.left);
       const leftX = x - leftOffset;
-      const leftY = y + this._baseOffsetY;
+      const leftY = y + this._baseOffsetY + this._radius;
 
       this._context.beginPath();
       this._context.moveTo(
-        x + this._radius * Math.cos(Math.PI * 0.75),
-        y + this._radius * Math.sin(Math.PI * 0.75)
+        x + this._radius * Math.cos(Math.PI * 0.65),
+        y + this._radius * Math.sin(Math.PI * 0.65)
       );
-      this._context.lineTo(leftX, leftY);
+      this._context.lineTo(
+        leftX - this._radius * Math.cos(Math.PI * -0.65), 
+        leftY + this._radius * Math.sin(Math.PI * -0.65)
+      );
       this._context.stroke();
 
-      this.drawNode(node.left, leftX, leftY + this._radius);
+      this.drawNode(node.left, leftX, leftY);
     }
 
     if (node.right) {
       const rightOffset = this.calculateHorizontalOffset(node.right);
       const rightX = x + rightOffset;
-      const rightY = y + this._baseOffsetY;
+      const rightY = y + this._baseOffsetY + this._radius;
 
       this._context.beginPath();
       this._context.moveTo(
-        x + this._radius * Math.cos(Math.PI * 0.25),
-        y + this._radius * Math.sin(Math.PI * 0.25)
+        x + this._radius * Math.cos(Math.PI * 0.35),
+        y + this._radius * Math.sin(Math.PI * 0.35)
       );
-      this._context.lineTo(rightX, rightY);
+      this._context.lineTo(
+        rightX - this._radius * Math.cos(Math.PI * -0.35), 
+        rightY + this._radius * Math.sin(Math.PI * -0.35)
+      );
       this._context.stroke();
 
-      this.drawNode(node.right, rightX, rightY + this._radius);
+      this.drawNode(node.right, rightX, rightY);
+    }
+  }
+
+  // nujno funcciyu kotoraya by pereshityvala pozicii i potom 
+  // peremeshala krujocki iz massiva kuda nado s animaciey
+  public update() {
+    this._canvas.reset();
+
+    for (const node of this._nodeArray) {
+      node.update();
+      node.draw();
     }
   }
 
