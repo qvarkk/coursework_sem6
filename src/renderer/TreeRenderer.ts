@@ -11,8 +11,9 @@ export default class TreeRenderer {
   private _baseOffsetX: number;
 
   private _radius: number;
+  private _separation: number;
 
-  constructor(canvas: Canvas, radius: number = 50) {
+  constructor(canvas: Canvas, radius: number = 50, separation: number = 10) {
     this._canvas = canvas;
     this._context = canvas.context;
 
@@ -20,6 +21,7 @@ export default class TreeRenderer {
     this._baseOffsetX = radius;
 
     this._radius = radius;
+    this._separation = separation;
   }
 
   public drawTree(tree: BinarySearchTree) {
@@ -33,7 +35,11 @@ export default class TreeRenderer {
 
   private drawNode(node: TreeNode, x: number, y: number) {
     const nodeCircle = new TreeNodeCircle(
-      this._context, x, y, node.value.toString(), this._radius
+      this._context,
+      x,
+      y,
+      node.value.toString(),
+      this._radius
     );
     nodeCircle.draw();
 
@@ -50,11 +56,7 @@ export default class TreeRenderer {
       this._context.lineTo(leftX, leftY);
       this._context.stroke();
 
-      this.drawNode(
-        node.left,
-        leftX,
-        leftY + this._radius
-      );
+      this.drawNode(node.left, leftX, leftY + this._radius);
     }
 
     if (node.right) {
@@ -70,19 +72,16 @@ export default class TreeRenderer {
       this._context.lineTo(rightX, rightY);
       this._context.stroke();
 
-      this.drawNode(
-        node.right,
-        rightX,
-        rightY + this._radius
-      );
+      this.drawNode(node.right, rightX, rightY + this._radius);
     }
   }
 
-  private calculateHorizontalOffset(node: TreeNode, separationPx: number = 10): number {
+  private calculateHorizontalOffset(node: TreeNode): number {
     const subtreeDepth = this.getTreeDepth(node);
 
     return (
-      Math.pow(2, subtreeDepth) / 2 * (this._baseOffsetX + separationPx / 2)
+      (Math.pow(2, subtreeDepth) / 2) *
+      (this._baseOffsetX + this._separation / 2)
     );
   }
 
