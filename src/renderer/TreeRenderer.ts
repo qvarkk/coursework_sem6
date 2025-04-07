@@ -1,7 +1,13 @@
 import Canvas from "../canvas/Canvas";
+import TreeEdgeLine from "../figures/TreeEdgeLine";
 import TreeNodeCircle from "../figures/TreeNodeCircle";
 import BinarySearchTree from "../tree/BinarySearchTree";
 import TreeNode from "../tree/TreeNode";
+
+interface NodeWithValue {
+  node: TreeNodeCircle;
+  value: number;
+}
 
 export default class TreeRenderer {
   private _canvas: Canvas;
@@ -13,9 +19,13 @@ export default class TreeRenderer {
   private _radius: number;
   private _separation: number;
 
-  private _nodeArray: TreeNodeCircle[] = [];
+  private _nodeTree: BinarySearchTree<NodeWithValue>;
+  private _valuesTree: BinarySearchTree<number>;
 
-  constructor(canvas: Canvas, radius: number = 50, separation: number = 30) {
+  private _edgeToBeAttached: TreeEdgeLine | null = null;
+  private _isLeft: boolean = false;
+
+  constructor(canvas: Canvas, radius: number = 50, separation: number = 25) {
     this._canvas = canvas;
     this._context = canvas.context;
 
@@ -24,79 +34,118 @@ export default class TreeRenderer {
 
     this._radius = radius;
     this._separation = separation;
+
+    this._nodeTree = new BinarySearchTree<NodeWithValue>();
+    this._valuesTree = new BinarySearchTree<number>();
   }
 
-  public drawTree(tree: BinarySearchTree) {
-    if (tree.root === null) return;
+  public async insert(value: number) {
+    let initialX = this._canvas.el.width / 2;
+    let initialY = 100;
 
-    let posY = 150;
-    let posX = this._canvas.el.width / 2;
-
-    this.drawNode(tree.root, posX, posY);
-  }
-
-  private drawNode(node: TreeNode, x: number, y: number) {
-    const nodeCircle = new TreeNodeCircle(
+    const node = new TreeNodeCircle(
       this._context,
-      x,
-      y,
-      node.value.toString(),
+      { x: 100, y: 100 },
+      value.toString(),
       this._radius
     );
-    nodeCircle.draw();
-    this._nodeArray.push(nodeCircle);
 
-    if (node.left) {
-      const leftOffset = this.calculateHorizontalOffset(node.left);
+    this._valuesTree.insert(value);
+    const { x, y } = this.updateTree(
+      this._nodeTree.root,
+      this._valuesTree.root,
+      initialX,
+      initialY
+    );
+    this._nodeTree.insert({ value, node }, (a, b) => a.value > b.value);
+
+    node.moveTo(x, y);
+    if (this._edgeToBeAttached) {
+      node.attachEdgeTo(this._edgeToBeAttached, this._isLeft);
+
+      this._edgeToBeAttached = null;
+      this._isLeft = false;
+    }
+  }
+
+  private updateTree(
+    nodeNode: TreeNode<NodeWithValue> | null,
+    valueNode: TreeNode<number> | null,
+    x: number,
+    y: number
+  ): {
+    x: number;
+    y: number;
+  } {
+    if (!nodeNode || !valueNode) return { x, y };
+
+    let leftCoords: { x: number; y: number } = { x: 0, y: 0 };
+    let rightCoords: { x: number; y: number } = { x: 0, y: 0 };
+
+    nodeNode.value.node.moveTo(x, y);
+
+    if (valueNode.left) {
+      const leftOffset = this.calculateHorizontalOffset(valueNode.left);
       const leftX = x - leftOffset;
       const leftY = y + this._baseOffsetY + this._radius;
 
-      this._context.beginPath();
-      this._context.moveTo(
-        x + this._radius * Math.cos(Math.PI * 0.65),
-        y + this._radius * Math.sin(Math.PI * 0.65)
-      );
-      this._context.lineTo(
-        leftX - this._radius * Math.cos(Math.PI * -0.65), 
-        leftY + this._radius * Math.sin(Math.PI * -0.65)
-      );
-      this._context.stroke();
+      if (!nodeNode.left) {
+        const edge = new TreeEdgeLine(this._context, {
+          fromX: 0,
+          fromY: 0,
+          toX: 0,
+          toY: 0,
+        });
+        nodeNode.value.node.attachLeftEdgeFrom(edge);
+        this._edgeToBeAttached = edge;
+        this._isLeft = true;
+      }
 
-      this.drawNode(node.left, leftX, leftY);
+      leftCoords = this.updateTree(nodeNode.left, valueNode.left, leftX, leftY);
     }
 
-    if (node.right) {
-      const rightOffset = this.calculateHorizontalOffset(node.right);
+    if (valueNode.right) {
+      const rightOffset = this.calculateHorizontalOffset(valueNode.right);
       const rightX = x + rightOffset;
       const rightY = y + this._baseOffsetY + this._radius;
 
-      this._context.beginPath();
-      this._context.moveTo(
-        x + this._radius * Math.cos(Math.PI * 0.35),
-        y + this._radius * Math.sin(Math.PI * 0.35)
-      );
-      this._context.lineTo(
-        rightX - this._radius * Math.cos(Math.PI * -0.35), 
-        rightY + this._radius * Math.sin(Math.PI * -0.35)
-      );
-      this._context.stroke();
+      if (!nodeNode.right) {
+        const edge = new TreeEdgeLine(this._context, {
+          fromX: 0,
+          fromY: 0,
+          toX: 0,
+          toY: 0,
+        });
+        nodeNode.value.node.attachRightEdgeFrom(edge);
+        this._edgeToBeAttached = edge;
+        this._isLeft = false;
+      }
 
-      this.drawNode(node.right, rightX, rightY);
+      rightCoords = this.updateTree(
+        nodeNode.right,
+        valueNode.right,
+        rightX,
+        rightY
+      );
+    }
+
+    if (leftCoords.y !== 0) {
+      return leftCoords;
+    } else {
+      return rightCoords;
     }
   }
 
-  // nujno funcciyu kotoraya by pereshityvala pozicii i potom 
-  // peremeshala krujocki iz massiva kuda nado s animaciey
   public update() {
     this._canvas.reset();
 
-    for (const node of this._nodeArray) {
-      node.update();
-      node.draw();
-    }
+    this._nodeTree.inorderTraversal((node) => {
+      node?.value.node.update();
+      node?.value.node.draw();
+    });
   }
 
-  private calculateHorizontalOffset(node: TreeNode): number {
+  private calculateHorizontalOffset<T>(node: TreeNode<T> | null): number {
     const subtreeDepth = this.getTreeDepth(node);
 
     return (
@@ -105,7 +154,7 @@ export default class TreeRenderer {
     );
   }
 
-  private getTreeDepth(node: TreeNode | null): number {
+  private getTreeDepth<T>(node: TreeNode<T> | null): number {
     if (node === null) return 0;
 
     return (
