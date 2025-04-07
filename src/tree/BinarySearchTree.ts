@@ -1,9 +1,11 @@
 import TreeNode from "./TreeNode";
 
-export default class BinarySearchTree {
-  private _root: TreeNode | null;
+type ComparatorFunction<T> = (a: T, b: T) => boolean;
 
-  public get root(): TreeNode | null {
+export default class BinarySearchTree<T> {
+  private _root: TreeNode<T> | null;
+
+  public get root(): TreeNode<T> | null {
     return this._root;
   }
 
@@ -11,37 +13,46 @@ export default class BinarySearchTree {
     this._root = null;
   }
 
-  public insert(value: number) {
-    const newNode = new TreeNode(value);
+  public insert(
+    value: T,
+    comparator: ComparatorFunction<T> = (a: T, b: T) => {
+      return a > b;
+    }
+  ) {
+    const newNode = new TreeNode<T>(value);
 
     if (this._root === null) {
       this._root = newNode;
     } else {
-      this.insertNode(this._root, newNode);
+      this.insertNode(this._root, newNode, comparator);
     }
   }
 
-  private insertNode(node: TreeNode, newNode: TreeNode) {
-    if (newNode.value < node.value) {
+  private insertNode(
+    node: TreeNode<T>,
+    newNode: TreeNode<T>,
+    comparator: ComparatorFunction<T>
+  ) {
+    if (!comparator(newNode.value, node.value)) {
       if (node.left === null) {
         node.left = newNode;
       } else {
-        this.insertNode(node.left, newNode);
+        this.insertNode(node.left, newNode, comparator);
       }
     } else {
       if (node.right === null) {
         node.right = newNode;
       } else {
-        this.insertNode(node.right, newNode);
+        this.insertNode(node.right, newNode, comparator);
       }
     }
   }
 
-  public remove(value: number) {
+  public remove(value: T) {
     this._root = this.removeNode(this._root, value);
   }
 
-  private removeNode(node: TreeNode | null, value: number): TreeNode | null {
+  private removeNode(node: TreeNode<T> | null, value: T): TreeNode<T> | null {
     if (node === null) {
       return null;
     } else if (value < node.value) {
@@ -77,11 +88,26 @@ export default class BinarySearchTree {
     }
   }
 
-  private findMinNode(node: TreeNode): TreeNode {
+  private findMinNode(node: TreeNode<T>): TreeNode<T> {
     if (node.left === null) {
       return node;
     } else {
       return this.findMinNode(node.left);
     }
+  }
+
+  public inorderTraversal(callback: (node: TreeNode<T> | null) => any) {
+    this._inorderTraversal(this._root, callback);
+  }
+
+  private _inorderTraversal(
+    node: TreeNode<T> | null,
+    callback: (node: TreeNode<T> | null) => any
+  ) {
+    if (!node) return;
+
+    this._inorderTraversal(node.left, callback);
+    callback(node);
+    this._inorderTraversal(node.right, callback);
   }
 }
