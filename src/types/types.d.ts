@@ -6,3 +6,6 @@ export type LineCoordinates = {
   toX: number;
   toY: number;
 };
+
+
+export type EasingFn = (t: number) => number;
