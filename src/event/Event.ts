@@ -19,9 +19,13 @@ export default class Event {
     );
   }
 
-  public notify(args: any) {
+  public notify(args: any): void {
     for (var i = 0; i < this._listeners.length; i++) {
       this._listeners[i](this._sender, args);
     }
+  }
+
+  public clearListeners(): void {
+    this._listeners = [];
   }
 }
