@@ -96,18 +96,26 @@ export default class BinarySearchTree<T> {
     }
   }
 
-  public inorderTraversal(callback: (node: TreeNode<T> | null) => any) {
+  public inorderTraversal(callback: (node: TreeNode<T> | null, ...args: any) => any) {
     this._inorderTraversal(this._root, callback);
   }
 
   private _inorderTraversal(
     node: TreeNode<T> | null,
-    callback: (node: TreeNode<T> | null) => any
+    callback: (node: TreeNode<T> | null, ...args: any) => any
   ) {
     if (!node) return;
 
     this._inorderTraversal(node.left, callback);
     callback(node);
     this._inorderTraversal(node.right, callback);
+  }
+
+  public getDepth(node: TreeNode<T> | null): number {
+    if (node === null) return 0;
+
+    return (
+      1 + Math.max(this.getDepth(node.left), this.getDepth(node.right))
+    );
   }
 }
