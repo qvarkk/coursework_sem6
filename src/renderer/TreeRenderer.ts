@@ -1,8 +1,11 @@
+import sleep from "../async/sleep";
 import Canvas from "../canvas/Canvas";
+import SelectedNodeCircle from "../figures/SelectedNodeCircle";
 import TreeEdgeLine from "../figures/TreeEdgeLine";
 import TreeNodeCircle from "../figures/TreeNodeCircle";
 import BinarySearchTree from "../tree/BinarySearchTree";
 import TreeNode from "../tree/TreeNode";
+import { Vector } from "../types/types";
 
 interface NodeWithValue {
   node: TreeNodeCircle;
@@ -19,11 +22,14 @@ export default class TreeRenderer {
   private _radius: number;
   private _separation: number;
 
-  private _nodeTree: BinarySearchTree<NodeWithValue>;
-  private _valuesTree: BinarySearchTree<number>;
+  private _tree: BinarySearchTree<NodeWithValue>;
 
-  private _edgeToBeAttached: TreeEdgeLine | null = null;
-  private _isLeft: boolean = false;
+  private _pendingEdgeAttachment: {
+    parent: NodeWithValue,
+    isLeft: boolean,
+  } | null = null;
+
+  private _selectionCircle: SelectedNodeCircle | null = null;
 
   constructor(canvas: Canvas, radius: number = 50, separation: number = 25) {
     this._canvas = canvas;
@@ -35,130 +41,149 @@ export default class TreeRenderer {
     this._radius = radius;
     this._separation = separation;
 
-    this._nodeTree = new BinarySearchTree<NodeWithValue>();
-    this._valuesTree = new BinarySearchTree<number>();
+    this._tree = new BinarySearchTree<NodeWithValue>();
+  }
+
+  public update(deltaTime: number) {
+    this._canvas.reset();
+    this._canvas.drawGrid();
+
+    this._tree.inorderTraversal((node) => {
+      node?.value.node.update(deltaTime);
+      node?.value.node.draw();
+    });
+
+    if (this._selectionCircle) {
+      this._selectionCircle.update(deltaTime);
+      this._selectionCircle.draw();
+    }
   }
 
   public async insert(value: number) {
-    let initialX = this._canvas.el.width / 2;
-    let initialY = 100;
+    const initialPos: Vector = {
+      x: this._canvas.el.width / 2,
+      y: 100,
+    };
 
-    const node = new TreeNodeCircle(
+    const node = this.createNode(value, initialPos);
+    this._tree.insert({ value, node }, (a, b) => a.value > b.value);
+
+    await this.visualiseInsertSelection(value, initialPos);
+
+    this.updateNodesPositions(this._tree.root, initialPos);
+    this.attachEdgeToInsertedNode(node);
+  }
+
+  private createNode(value: number, initialPos: Vector): TreeNodeCircle {
+    let position = {
+      x: 100, y: 100
+    };
+
+    if (!this._tree.root) {
+      position = initialPos;
+    }
+
+    return new TreeNodeCircle(
       this._context,
-      { x: 100, y: 100 },
+      position,
       value.toString(),
       this._radius
     );
+  }
 
-    this._valuesTree.insert(value);
-    const { x, y } = this.updateTree(
-      this._nodeTree.root,
-      this._valuesTree.root,
-      initialX,
-      initialY
+  private async visualiseInsertSelection(value: number, initialPos: Vector) {
+    this._selectionCircle = new SelectedNodeCircle(
+      this._context,
+      initialPos,
+      this._radius * 1.1
     );
-    this._nodeTree.insert({ value, node }, (a, b) => a.value > b.value);
 
-    node.moveTo(x, y);
-    if (this._edgeToBeAttached) {
-      node.attachEdgeTo(this._edgeToBeAttached, this._isLeft);
+    await this._visualiseInsertSelection(this._tree.root, value);
 
-      this._edgeToBeAttached = null;
-      this._isLeft = false;
-    }
+    this._selectionCircle = null;
   }
 
-  private updateTree(
+  private async _visualiseInsertSelection(
     nodeNode: TreeNode<NodeWithValue> | null,
-    valueNode: TreeNode<number> | null,
-    x: number,
-    y: number
-  ): {
-    x: number;
-    y: number;
-  } {
-    if (!nodeNode || !valueNode) return { x, y };
+    value: number
+  ) {
+    if (!nodeNode || !this._selectionCircle) return;
 
-    let leftCoords: { x: number; y: number } = { x: 0, y: 0 };
-    let rightCoords: { x: number; y: number } = { x: 0, y: 0 };
+    await this._selectionCircle.moveToAsync({
+      x: nodeNode.value.node.positionX,
+      y: nodeNode.value.node.positionY,
+    }, 500);
 
-    nodeNode.value.node.moveTo(x, y);
+    this._selectionCircle.strokeStyle = "#990000";
+    await sleep(1000);
+    this._selectionCircle.strokeStyle = "#003300";
 
-    if (valueNode.left) {
-      const leftOffset = this.calculateHorizontalOffset(valueNode.left);
-      const leftX = x - leftOffset;
-      const leftY = y + this._baseOffsetY + this._radius;
-
-      if (!nodeNode.left) {
-        const edge = new TreeEdgeLine(this._context, {
-          fromX: 0,
-          fromY: 0,
-          toX: 0,
-          toY: 0,
-        });
-        nodeNode.value.node.attachLeftEdgeFrom(edge);
-        this._edgeToBeAttached = edge;
-        this._isLeft = true;
-      }
-
-      leftCoords = this.updateTree(nodeNode.left, valueNode.left, leftX, leftY);
-    }
-
-    if (valueNode.right) {
-      const rightOffset = this.calculateHorizontalOffset(valueNode.right);
-      const rightX = x + rightOffset;
-      const rightY = y + this._baseOffsetY + this._radius;
-
-      if (!nodeNode.right) {
-        const edge = new TreeEdgeLine(this._context, {
-          fromX: 0,
-          fromY: 0,
-          toX: 0,
-          toY: 0,
-        });
-        nodeNode.value.node.attachRightEdgeFrom(edge);
-        this._edgeToBeAttached = edge;
-        this._isLeft = false;
-      }
-
-      rightCoords = this.updateTree(
-        nodeNode.right,
-        valueNode.right,
-        rightX,
-        rightY
-      );
-    }
-
-    if (leftCoords.y !== 0) {
-      return leftCoords;
+    if (value < nodeNode.value.value) {
+      await this._visualiseInsertSelection(nodeNode.left, value);
     } else {
-      return rightCoords;
+      await this._visualiseInsertSelection(nodeNode.right, value);
     }
   }
 
-  public update() {
-    this._canvas.reset();
+  private updateNodesPositions(
+    node: TreeNode<NodeWithValue> | null,
+    { x, y }: Vector,
+    parent: TreeNode<NodeWithValue> | null = null,
+    isLeftChild: boolean = false,
+  ): void {
+    if (!node) return;
 
-    this._nodeTree.inorderTraversal((node) => {
-      node?.value.node.update();
-      node?.value.node.draw();
-    });
+    node.value.node.moveTo({ x, y });
+
+    if (parent && !node.value.node.hasEdgeTo()) {
+      this._pendingEdgeAttachment = {
+        parent: parent.value,
+        isLeft: isLeftChild
+      };
+    }
+
+    if (node.left) {
+      const leftOffset = this.calculateHorizontalOffset(node.left);
+      const leftPos = {
+        x: x - leftOffset,
+        y: y + this._baseOffsetY + this._radius
+      };
+
+      this.updateNodesPositions(node.left, leftPos, node, true);
+    }
+
+    if (node.right) {
+      const rightOffset = this.calculateHorizontalOffset(node.right);
+      const rightPos: Vector = {
+        x:  x + rightOffset,
+        y: y + this._baseOffsetY + this._radius
+      };
+
+      this.updateNodesPositions(node.right, rightPos, node, false);
+    }
   }
 
-  private calculateHorizontalOffset<T>(node: TreeNode<T> | null): number {
-    const subtreeDepth = this.getTreeDepth(node);
+  private attachEdgeToInsertedNode(node: TreeNodeCircle) {
+    if (!this._pendingEdgeAttachment) return;
+
+    const { parent, isLeft } = this._pendingEdgeAttachment;
+    const edge = new TreeEdgeLine(this._context);
+
+    node.attachEdgeTo(edge, isLeft);
+
+    if (isLeft) {
+      parent.node.attachLeftEdgeFrom(edge);
+    } else {
+      parent.node.attachRightEdgeFrom(edge);
+    }
+  }
+
+  private calculateHorizontalOffset(node: TreeNode<NodeWithValue> | null): number {
+    const subtreeDepth = this._tree.getDepth(node);
 
     return (
       (Math.pow(2, subtreeDepth) / 2) *
       (this._baseOffsetX + this._separation / 2)
-    );
-  }
-
-  private getTreeDepth<T>(node: TreeNode<T> | null): number {
-    if (node === null) return 0;
-
-    return (
-      1 + Math.max(this.getTreeDepth(node.left), this.getTreeDepth(node.right))
     );
   }
 }
