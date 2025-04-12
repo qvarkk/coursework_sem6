@@ -16,7 +16,7 @@ export default class BinarySearchTree<T> {
   public insert(
     value: T,
     comparator: ComparatorFunction<T> = (a: T, b: T) => {
-      return a > b;
+      return a >= b;
     }
   ) {
     const newNode = new TreeNode<T>(value);

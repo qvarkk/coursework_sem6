@@ -66,7 +66,7 @@ export default class TreeRenderer {
     };
 
     const node = this.createNode(value, initialPos);
-    this._tree.insert({ value, node }, (a, b) => a.value > b.value);
+    this._tree.insert({ value, node }, (a, b) => a.value >= b.value);
 
     await this.visualiseInsertSelection(value, initialPos);
 
@@ -81,7 +81,7 @@ export default class TreeRenderer {
 
     if (!this._tree.root) {
       position = initialPos;
-    }
+    } 
 
     return new TreeNodeCircle(
       this._context,
