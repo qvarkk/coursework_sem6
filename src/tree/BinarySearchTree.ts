@@ -1,6 +1,7 @@
 import TreeNode from "./TreeNode";
 
-type ComparatorFunction<T> = (a: T, b: T) => boolean;
+type TwoWayComparatorFunction<T> = (a: T, b: T) => boolean;
+type ThreeWayComparatorFunction<T> = (a: T, b: T) => number;
 
 export default class BinarySearchTree<T> {
   private _root: TreeNode<T> | null;
@@ -15,7 +16,7 @@ export default class BinarySearchTree<T> {
 
   public insert(
     value: T,
-    comparator: ComparatorFunction<T> = (a: T, b: T) => {
+    comparator: TwoWayComparatorFunction<T> = (a: T, b: T) => {
       return a >= b;
     }
   ) {
@@ -31,7 +32,7 @@ export default class BinarySearchTree<T> {
   private insertNode(
     node: TreeNode<T>,
     newNode: TreeNode<T>,
-    comparator: ComparatorFunction<T>
+    comparator: TwoWayComparatorFunction<T>
   ) {
     if (!comparator(newNode.value, node.value)) {
       if (node.left === null) {
@@ -48,18 +49,25 @@ export default class BinarySearchTree<T> {
     }
   }
 
-  public remove(value: T) {
-    this._root = this.removeNode(this._root, value);
+  public remove(
+    value: T,
+    comparator: ThreeWayComparatorFunction<T>
+  ) {
+    this._root = this.removeNode(this._root, value, comparator);
   }
 
-  private removeNode(node: TreeNode<T> | null, value: T): TreeNode<T> | null {
+  private removeNode(
+    node: TreeNode<T> | null, 
+    value: T,
+    comparator: ThreeWayComparatorFunction<T>
+  ): TreeNode<T> | null {
     if (node === null) {
       return null;
-    } else if (value < node.value) {
-      node.left = this.removeNode(node.left, value);
+    } else if (comparator(value, node.value) < 0) {
+      node.left = this.removeNode(node.left, value, comparator);
       return node;
-    } else if (value > node.value) {
-      node.right = this.removeNode(node.right, value);
+    } else if (comparator(value, node.value) > 0) {
+      node.right = this.removeNode(node.right, value, comparator);
       return node;
     } else {
       // deleting node with no children
@@ -83,7 +91,7 @@ export default class BinarySearchTree<T> {
       var aux = this.findMinNode(node.right);
       node.value = aux.value;
 
-      node.right = this.removeNode(node.right, aux.value);
+      node.right = this.removeNode(node.right, aux.value, comparator);
       return node;
     }
   }

@@ -28,5 +28,18 @@ const onAddNodeButtonClick = () => {
   renderer.insert(nodeValue);
 };
 
+const onSearchNodeButtonClick = () => {
+  const searchNodeInput = document.querySelector('#searchNodeInput') as HTMLInputElement;
+  if (!searchNodeInput.value) return;
+  
+  const nodeValue = parseInt(searchNodeInput.value);
+  
+  canvas.reset();
+  renderer.search(nodeValue);
+};
+
 const addNodeButton = document.querySelector('#addNodeButton') as HTMLButtonElement;
 addNodeButton.addEventListener('click', onAddNodeButtonClick);
+
+const searchNodeButton = document.querySelector('#searchNodeButton') as HTMLButtonElement;
+searchNodeButton.addEventListener('click', onSearchNodeButtonClick);

@@ -68,10 +68,31 @@ export default class TreeRenderer {
     const node = this.createNode(value, initialPos);
     this._tree.insert({ value, node }, (a, b) => a.value >= b.value);
 
-    await this.visualiseInsertSelection(value, initialPos);
+    await this.visualizeInsertSelection(value, initialPos);
 
     this.updateNodesPositions(this._tree.root, initialPos);
     this.attachEdgeToInsertedNode(node);
+  }
+
+  public async search(value: number) {
+    const initialPos: Vector = {
+      x: this._canvas.el.width / 2,
+      y: 100,
+    };
+
+    await this.visualizeSearch(value, initialPos);
+  }
+
+  public async delete(value: number) {
+    const initialPos: Vector = {
+      x: this._canvas.el.width / 2,
+      y: 100,
+    };
+
+    await this.visualizeDelete(value, initialPos);
+
+    this._tree.remove({ value }, (a, b) => a.value - b.value);
+    this.updateNodesPositions(this._tree.root, initialPos);
   }
 
   private createNode(value: number, initialPos: Vector): TreeNodeCircle {
@@ -91,37 +112,120 @@ export default class TreeRenderer {
     );
   }
 
-  private async visualiseInsertSelection(value: number, initialPos: Vector) {
+  private async visualizeInsertSelection(value: number, initialPos: Vector) {
     this._selectionCircle = new SelectedNodeCircle(
       this._context,
       initialPos,
       this._radius * 1.1
     );
 
-    await this._visualiseInsertSelection(this._tree.root, value);
+    await this._visualizeInsertSelection(this._tree.root, value);
 
     this._selectionCircle = null;
   }
 
-  private async _visualiseInsertSelection(
-    nodeNode: TreeNode<NodeWithValue> | null,
+  private async _visualizeInsertSelection(
+    nodeWithValue: TreeNode<NodeWithValue> | null,
     value: number
   ) {
-    if (!nodeNode || !this._selectionCircle) return;
+    if (!nodeWithValue || !this._selectionCircle) return;
 
     await this._selectionCircle.moveToAsync({
-      x: nodeNode.value.node.positionX,
-      y: nodeNode.value.node.positionY,
+      x: nodeWithValue.value.node.positionX,
+      y: nodeWithValue.value.node.positionY,
     }, 500);
 
     this._selectionCircle.strokeStyle = "#990000";
     await sleep(1000);
     this._selectionCircle.strokeStyle = "#003300";
 
-    if (value < nodeNode.value.value) {
-      await this._visualiseInsertSelection(nodeNode.left, value);
+    if (value < nodeWithValue.value.value) {
+      await this._visualizeInsertSelection(nodeWithValue.left, value);
     } else {
-      await this._visualiseInsertSelection(nodeNode.right, value);
+      await this._visualizeInsertSelection(nodeWithValue.right, value);
+    }
+  }
+
+  private async visualizeSearch(value: number, initialPos: Vector): Promise<void> {
+    this._selectionCircle = new SelectedNodeCircle(
+      this._context,
+      initialPos,
+      this._radius * 1.1
+    );
+
+    await this._visualizeSearch(this._tree.root, value);
+
+    this._selectionCircle = null;
+  }
+
+  private async _visualizeSearch(
+    nodeWithValue: TreeNode<NodeWithValue> | null,
+    value: number
+  ): Promise<void> {
+    if (!nodeWithValue || !this._selectionCircle) return;
+
+    await this._selectionCircle.moveToAsync({
+      x: nodeWithValue.value.node.positionX,
+      y: nodeWithValue.value.node.positionY,
+    }, 500);
+
+    // let user understand what's going on
+    await sleep(1000); 
+
+    if (value < nodeWithValue.value.value) {
+      if (nodeWithValue.left)
+        await this._visualizeSearch(nodeWithValue.left, value);
+      else {
+        this._selectionCircle.strokeStyle = "#990000";
+        await sleep(2000);
+      }
+    } else if (value > nodeWithValue.value.value) {
+      if (nodeWithValue.right)
+        await this._visualizeSearch(nodeWithValue.right, value);
+      else {
+        this._selectionCircle.strokeStyle = "#990000";
+        await sleep(2000);
+      }
+    } else {
+      this._selectionCircle.strokeStyle = "#000099";
+      await sleep(2000);
+    }
+  }
+
+  private async visualizeDelete(value: number, initialPos: Vector) {
+    this._selectionCircle = new SelectedNodeCircle(
+      this._context,
+      initialPos,
+      this._radius * 1.1
+    );
+
+    await this._visualizeDelete(this._tree.root, value);
+
+    this._selectionCircle = null;
+  }
+
+  private async _visualizeDelete(
+    nodeWithValue: TreeNode<NodeWithValue> | null,
+    value: number
+  ) {
+    if (!nodeWithValue || !this._selectionCircle) return;
+
+    await this._selectionCircle.moveToAsync({
+      x: nodeWithValue.value.node.positionX,
+      y: nodeWithValue.value.node.positionY,
+    }, 500);
+
+    await sleep(1000);
+
+    if (value < nodeWithValue.value.value) {
+      await this._visualizeDelete(nodeWithValue.left, value);
+    } else if (value > nodeWithValue.value.value) {
+      await this._visualizeDelete(nodeWithValue.right, value);
+    } else {
+      this._selectionCircle.strokeStyle = "#990000";
+      await sleep(1000);
+      
+      
     }
   }
 
