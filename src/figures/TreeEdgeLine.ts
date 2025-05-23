@@ -1,23 +1,45 @@
-import TwoPointAnimatedObject from "../animatedObjects/TwoPointAnimatedObject";
-import { LineCoordinates } from "../types/types";
-
-export default class TreeEdgeLine extends TwoPointAnimatedObject {
+export default class TreeEdgeLine {
   private _context: CanvasRenderingContext2D;
-  private _isAttached: boolean = true;
 
-  constructor(
-    context: CanvasRenderingContext2D,
-    coordinates: LineCoordinates
-  ) {
-    super(coordinates);
+  private _fromX: number = 0;
+  private _fromY: number = 0;
+  private _toX: number = 0;
+  private _toY: number = 0;
 
-    this._context = context;
+  public get fromX(): number {
+    return this._fromX;
   }
 
-  public update() {
-    if (!this._isAttached) {
-      super.update();
-    }
+  public get fromY(): number {
+    return this._fromY;
+  }
+
+  public set fromX(fromX: number) {
+    this._fromX = fromX;
+  }
+
+  public set fromY(fromY: number) {
+    this._fromY = fromY;
+  }
+
+  public get toX(): number {
+    return this._toX;
+  }
+
+  public get toY(): number {
+    return this._toY;
+  }
+
+  public set toX(toX: number) {
+    this._toX = toX;
+  }
+
+  public set toY(toY: number) {
+    this._toY = toY;
+  }
+
+  constructor(context: CanvasRenderingContext2D) {
+    this._context = context;
   }
 
   public draw(): void {
@@ -25,12 +47,8 @@ export default class TreeEdgeLine extends TwoPointAnimatedObject {
     this._context.moveTo(this.fromX, this.fromY);
     this._context.lineTo(this.toX, this.toY);
 
-    this._context.strokeStyle = '#003300';
-    this._context.lineWidth = 3;
+    this._context.strokeStyle = "#003300";
+    this._context.lineWidth = 1;
     this._context.stroke();
-  }
-
-  public attach() {
-    this._isAttached = true;
   }
 }

@@ -31,8 +31,8 @@ export default class TreeNodeCircle extends OnePointAnimatedObject {
     this._radius = radius;
   }
 
-  public update() {
-    super.update();
+  public update(deltaTime: number) {
+    super.update(deltaTime);
 
     if (this._edgeTo) {
       const angle = this._isLeft ? -0.35 : -0.65;
@@ -53,7 +53,7 @@ export default class TreeNodeCircle extends OnePointAnimatedObject {
 
   public draw(): void {
     this._context.beginPath();
-
+    
     this._context.arc(
       this.positionX,
       this.positionY,
@@ -63,7 +63,7 @@ export default class TreeNodeCircle extends OnePointAnimatedObject {
     );
 
     this._context.strokeStyle = '#006600';
-    this._context.fillStyle = '#00cc0033';
+    this._context.fillStyle = '#ffffff';
     this._context.lineWidth = 3;
     this._context.stroke();
     this._context.fill();
@@ -101,5 +101,9 @@ export default class TreeNodeCircle extends OnePointAnimatedObject {
 
   public attachRightEdgeFrom(edge: TreeEdgeLine) {
     this._edgeFromRight = edge;
+  }
+
+  public hasEdgeTo(): boolean {
+    return this._edgeTo !== null;
   }
 }

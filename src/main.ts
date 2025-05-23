@@ -9,15 +9,13 @@ canvas.init({
 });
 
 const renderer = new TreeRenderer(canvas, 25);
-renderer.insert(50);
-renderer.update();
 
-function animate() {
-  renderer.update();
+function animate(deltaTime: number) {
+  renderer.update(deltaTime);
 
   requestAnimationFrame(animate);
 }
-animate();
+animate(0);
 
 const onAddNodeButtonClick = () => {
   const addNodeInput = document.querySelector('#addNodeInput') as HTMLInputElement;
