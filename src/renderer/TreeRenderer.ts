@@ -91,6 +91,7 @@ export default class TreeRenderer {
 
     await this.visualizeDelete(value, initialPos);
 
+    const node = this.createNode(value, initialPos);
     this._tree.remove({ value }, (a, b) => a.value - b.value);
     this.updateNodesPositions(this._tree.root, initialPos);
   }
