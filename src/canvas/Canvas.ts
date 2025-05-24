@@ -18,11 +18,6 @@ export default class Canvas {
     this.context = this.el.getContext("2d") as CanvasRenderingContext2D;
   }
 
-  public init(config: CanvasConfig): void {
-    this.el.height = config.height;
-    this.el.width = config.width;
-  }
-
   public reset(fillStyle: string = '#fff') {
     const oldFillStyle = this.context.fillStyle;
     this.context.fillStyle = fillStyle;
@@ -85,5 +80,10 @@ export default class Canvas {
     }
 
     ctx.restore();
+  }
+
+  public resize(config: CanvasConfig): void {
+    this.el.height = config.height;
+    this.el.width = config.width;
   }
 }

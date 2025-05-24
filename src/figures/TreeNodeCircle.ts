@@ -14,6 +14,18 @@ export default class TreeNodeCircle extends OnePointAnimatedObject {
   private _edgeFromLeft: TreeEdgeLine | null = null;
   private _edgeFromRight: TreeEdgeLine | null = null;
 
+  public get edgeTo(): TreeEdgeLine | null {
+    return this._edgeTo;
+  }
+
+  public get edgeFromLeft(): TreeEdgeLine | null {
+    return this._edgeFromLeft;
+  }
+
+  public get edgeFromRight(): TreeEdgeLine | null {
+    return this._edgeFromRight;
+  }
+
   public get radius(): number {
     return this._radius;
   }
@@ -101,6 +113,19 @@ export default class TreeNodeCircle extends OnePointAnimatedObject {
 
   public attachRightEdgeFrom(edge: TreeEdgeLine) {
     this._edgeFromRight = edge;
+  }
+
+  public detachEdgeTo() {
+    this._edgeTo = null;
+    this._isLeft = null;
+  }
+
+  public detachLeftEdgeFrom() {
+    this._edgeFromLeft = null;
+  }
+
+  public detachRightEdgeFrom() {
+    this._edgeFromRight = null;
   }
 
   public hasEdgeTo(): boolean {

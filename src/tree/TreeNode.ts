@@ -9,7 +9,7 @@ export default class TreeNode<T> {
   }
 
   public set value(value: T) {
-    this.value = value;
+    this._value = value;
   }
 
   public get left(): TreeNode<T> | null {

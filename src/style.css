@@ -10,6 +10,17 @@ body {
   top: 0;
   left: 0;
   z-index: 9999;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.input-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #canvas {

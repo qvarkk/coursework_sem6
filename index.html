@@ -7,10 +7,18 @@
   </head>
   <body>
     <header class="header">
-      <input id="addNodeInput" type="number" maxlength="5" class="input" placeholder="Enter value...">
+      <div class="input-group">
+      <input id="addNodeInput" type="number" max="9999" class="input" placeholder="Enter value...">
       <button id="addNodeButton">Insert</button>
-      <input id="searchNodeInput" type="number" maxlength="5" class="input" placeholder="Enter value...">
-      <button id="searchNodeButton">Search</button>
+      </div>
+      <div class="input-group">
+        <input id="searchNodeInput" type="number" max="9999" class="input" placeholder="Enter value...">
+        <button id="searchNodeButton">Search</button>
+      </div>
+      <div class="input-group">
+        <input id="deleteNodeInput" type="number" max="9999" class="input" placeholder="Enter value...">
+        <button id="deleteNodeButton">Delete</button>
+      </div>
     </header>
     <main>
       <canvas id="canvas"></canvas>

@@ -43,6 +43,9 @@ export default class TreeEdgeLine {
   }
 
   public draw(): void {
+    if (this.fromX === 0 && this.fromY === 0 || this.toX === 0 && this.toY === 0)
+      return;
+
     this._context.beginPath();
     this._context.moveTo(this.fromX, this.fromY);
     this._context.lineTo(this.toX, this.toY);

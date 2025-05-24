@@ -24,11 +24,6 @@ export default class TreeRenderer {
 
   private _tree: BinarySearchTree<NodeWithValue>;
 
-  private _pendingEdgeAttachment: {
-    parent: NodeWithValue,
-    isLeft: boolean,
-  } | null = null;
-
   private _selectionCircle: SelectedNodeCircle | null = null;
 
   constructor(canvas: Canvas, radius: number = 50, separation: number = 25) {
@@ -70,8 +65,8 @@ export default class TreeRenderer {
 
     await this.visualizeInsertSelection(value, initialPos);
 
+    this.reattachAllEdges();
     this.updateNodesPositions(this._tree.root, initialPos);
-    this.attachEdgeToInsertedNode(node);
   }
 
   public async search(value: number) {
@@ -92,7 +87,9 @@ export default class TreeRenderer {
     await this.visualizeDelete(value, initialPos);
 
     const node = this.createNode(value, initialPos);
-    this._tree.remove({ value }, (a, b) => a.value - b.value);
+    this._tree.remove({ value, node }, (a, b) => a.value - b.value);
+
+    this.reattachAllEdges();
     this.updateNodesPositions(this._tree.root, initialPos);
   }
 
@@ -216,6 +213,7 @@ export default class TreeRenderer {
       y: nodeWithValue.value.node.positionY,
     }, 500);
 
+    // let user understand what's going on
     await sleep(1000);
 
     if (value < nodeWithValue.value.value) {
@@ -225,27 +223,16 @@ export default class TreeRenderer {
     } else {
       this._selectionCircle.strokeStyle = "#990000";
       await sleep(1000);
-      
-      
     }
   }
 
   private updateNodesPositions(
     node: TreeNode<NodeWithValue> | null,
-    { x, y }: Vector,
-    parent: TreeNode<NodeWithValue> | null = null,
-    isLeftChild: boolean = false,
+    { x, y }: Vector
   ): void {
     if (!node) return;
 
     node.value.node.moveTo({ x, y });
-
-    if (parent && !node.value.node.hasEdgeTo()) {
-      this._pendingEdgeAttachment = {
-        parent: parent.value,
-        isLeft: isLeftChild
-      };
-    }
 
     if (node.left) {
       const leftOffset = this.calculateHorizontalOffset(node.left);
@@ -254,7 +241,7 @@ export default class TreeRenderer {
         y: y + this._baseOffsetY + this._radius
       };
 
-      this.updateNodesPositions(node.left, leftPos, node, true);
+      this.updateNodesPositions(node.left, leftPos);
     }
 
     if (node.right) {
@@ -264,23 +251,45 @@ export default class TreeRenderer {
         y: y + this._baseOffsetY + this._radius
       };
 
-      this.updateNodesPositions(node.right, rightPos, node, false);
+      this.updateNodesPositions(node.right, rightPos);
     }
   }
 
-  private attachEdgeToInsertedNode(node: TreeNodeCircle) {
-    if (!this._pendingEdgeAttachment) return;
+  private reattachAllEdges() {
+    this._detachAllEdges(this._tree.root);
+    this._attachAllEdges(this._tree.root);
+  }
 
-    const { parent, isLeft } = this._pendingEdgeAttachment;
-    const edge = new TreeEdgeLine(this._context);
+  private _detachAllEdges(node: TreeNode<NodeWithValue> | null): void {
+    if (node === null) return;
 
-    node.attachEdgeTo(edge, isLeft);
+    node.value.node.detachEdgeTo();
+    node.value.node.detachLeftEdgeFrom();
+    node.value.node.detachRightEdgeFrom();
 
-    if (isLeft) {
-      parent.node.attachLeftEdgeFrom(edge);
-    } else {
-      parent.node.attachRightEdgeFrom(edge);
+    this._detachAllEdges(node.left);
+    this._detachAllEdges(node.right);
+  }
+
+  private _attachAllEdges(node: TreeNode<NodeWithValue> | null): void {
+    if (node === null) return;
+
+    if (node.left) {
+      const leftEdge = new TreeEdgeLine(this._context);
+
+      node.value.node.attachLeftEdgeFrom(leftEdge);
+      node.left.value.node.attachEdgeTo(leftEdge, true);
     }
+
+    if (node.right) {
+      const rightEdge = new TreeEdgeLine(this._context);
+
+      node.value.node.attachRightEdgeFrom(rightEdge);
+      node.right.value.node.attachEdgeTo(rightEdge, false);
+    }
+
+    this._attachAllEdges(node.left);
+    this._attachAllEdges(node.right);
   }
 
   private calculateHorizontalOffset(node: TreeNode<NodeWithValue> | null): number {
